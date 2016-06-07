@@ -31,6 +31,8 @@ class Anim(MCMC):
 				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=alpha,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 
+		self.m = m
+		self.c = c
 		self.X=np.linspace(-10, 10, 25)
 		self.delta = np.random.uniform(low=-1*RedStd, high=RedStd, size=len(self.X))
 		self.Y = (m*self.X + c) + self.delta
@@ -83,8 +85,7 @@ class Anim(MCMC):
 
 		f, axarr = plt.subplots(1, 2, figsize=(16,7))
 
-		axarr[0].set_xlim(-10, 10)
-		axarr[0].set_ylim(-100, 100)
+
 		axarr[1].set_xlim(4, 6)
 		axarr[1].set_ylim(22, 28)
 
@@ -135,7 +136,9 @@ class Anim(MCMC):
 
 				# Updating number of accepted points.
 				axarr[0].clear()
-				axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
+				axarr[0].set_xlim(-10, 10)
+				axarr[0].set_ylim(-50, 100)
+				axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=8, ls='', marker='s')
 				axarr[0].plot(self.X, self.FittingFunction(OldStep), 'k', ls='-', lw=2)
 				axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i+1, acceptedpoints), fontsize=22)
 				xlist.append(OldStep[0])
@@ -160,10 +163,14 @@ class Anim(MCMC):
 
 
 		axarr[0].clear()
-		axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
+		axarr[0].set_xlim(-10, 10)
+		axarr[0].set_ylim(-50, 100)
+		axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=8, ls='', marker='s')
 		axarr[0].plot(self.X, self.FittingFunction(BestStep), 'k', ls='-', lw=2)
 		axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i+1, acceptedpoints), fontsize=22)
-		axarr[1].plot(BestStep[0], BestStep[1], 'or', ms=12)
+		axarr[1].plot(BestStep[0], BestStep[1], 'or', ms=12, label='$\mathtt{BestFit}$')
+		axarr[1].plot(self.m, self.c, 'og', ms=12, label='$\mathtt{Fiducial}$')
+		axarr[1].legend(loc=1, fontsize=18, numpoints=1)
 		axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f,\ \chi^2=%1.3f}$'%(BestStep[0], BestStep[1], Bestchi2), fontsize=22)
 		axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
 		axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
