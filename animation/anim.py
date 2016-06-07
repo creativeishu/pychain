@@ -25,7 +25,7 @@ class Anim(MCMC):
 		"""
 		Instantiates the class by synthetically generating data.
 		"""
-		MCMC.__init__(self, NumberOfSteps=100000, \
+		MCMC.__init__(self, NumberOfSteps=20000, \
 				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=0.2,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 
@@ -81,8 +81,8 @@ class Anim(MCMC):
 
 		axarr[0].set_xlim(-10, 10)
 		axarr[0].set_ylim(-100, 100)
-		axarr[1].set_xlim(0, 10)
-		axarr[1].set_ylim(20, 30)
+		axarr[1].set_xlim(4, 6)
+		axarr[1].set_ylim(22, 28)
 
 		axarr[1].set_xlabel('$\mathtt{m}$', fontsize=22)
 		axarr[1].set_ylabel('$\mathtt{c}$', fontsize=22)
@@ -102,6 +102,8 @@ class Anim(MCMC):
 		multiplicity = 0
 		acceptedpoints = 0
 
+		xlist=[]
+		ylist=[]
 		# Chain starts here...
 		for i in range(self.NumberOfSteps):
 			multiplicity += 1
@@ -128,10 +130,13 @@ class Anim(MCMC):
 
 				# Updating number of accepted points.
 				axarr[0].clear()
-				axarr[0].errorbar(self.X, self.Y, self.delta, color='Grey', ms=14, ls='')
+				axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
 				axarr[0].plot(self.X, self.FittingFunction(OldStep), 'k', ls='-', lw=2)
 				axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i, acceptedpoints), fontsize=22)
-				axarr[1].scatter(OldStep[0], OldStep[1])
+				xlist.append(OldStep[0])
+				ylist.append(OldStep[1])
+				axarr[1].plot(xlist[-3:-1], ylist[-3:-1], 'k', lw=0.2)
+
 				axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(OldStep), fontsize=22)
 				axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
 				axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
