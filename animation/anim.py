@@ -21,17 +21,19 @@ class Anim(MCMC):
 	c (Float): Feducial value of the intercept of the linear data.
 	RedStd (Float): Feducial value of the standard deviation of the linear data.
 	"""
-	def __init__(self, m=5.0, c=25.0, RedStd=5.0):
+	def __init__(self, m=5.0, c=25.0, RedStd=15.0, alpha=1.5, delay=0.001):
 		"""
 		Instantiates the class by synthetically generating data.
 		"""
 		MCMC.__init__(self, NumberOfSteps=20000, \
-				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=0.2,\
+				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=alpha,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 
 		self.X=np.linspace(-10, 10, 25)
 		self.delta = np.random.uniform(low=-1*RedStd, high=RedStd, size=len(self.X))
 		self.Y = (m*self.X + c) + self.delta
+
+		self.delay = delay
 
 #----------------------------------------------------------
 
@@ -133,7 +135,7 @@ class Anim(MCMC):
 				axarr[0].clear()
 				axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
 				axarr[0].plot(self.X, self.FittingFunction(OldStep), 'k', ls='-', lw=2)
-				axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i, acceptedpoints), fontsize=22)
+				axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i+1, acceptedpoints), fontsize=22)
 				xlist.append(OldStep[0])
 				ylist.append(OldStep[1])
 				axarr[1].plot(xlist[-3:-1], ylist[-3:-1], 'k', lw=0.2)
@@ -141,7 +143,7 @@ class Anim(MCMC):
 				axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(OldStep), fontsize=22)
 				axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
 				axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
-				plt.pause(0.005)
+				plt.pause(self.delay)
 				plt.draw()
 
 				# Updating the old step. 
@@ -158,7 +160,7 @@ class Anim(MCMC):
 		axarr[0].clear()
 		axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
 		axarr[0].plot(self.X, self.FittingFunction(BestStep), 'k', ls='-', lw=2)
-		axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i, acceptedpoints), fontsize=22)
+		axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i+1, acceptedpoints), fontsize=22)
 		axarr[1].plot(BestStep[0], BestStep[1], 'or', ms=12)
 		axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(BestStep), fontsize=22)
 		axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
