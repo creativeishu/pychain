@@ -122,8 +122,9 @@ class Anim(MCMC):
 			if GoodPoint:
 				# Updating best chi-square so far in the chain.
 				if Newchi2<Bestchi2:
-					Bestchi2=Newchi2
-					print Bestchi2, NewStep
+					BestStep = NewStep
+					Bestchi2 = Newchi2
+					print "Best chi-square and step so far: ", Bestchi2, NewStep
 
 				acceptedpoints += 1
 				multiplicity = 0
@@ -151,6 +152,17 @@ class Anim(MCMC):
 		# Writing Best chi-square of the full chain and the acceptance ratio.
 		print "Best chi square: %1.5f"%Bestchi2
 		print "Acceptance Ratio: %1.5f"%(float(acceptedpoints)/i) 
+
+
+
+		axarr[0].clear()
+		axarr[0].errorbar(self.X, self.Y, self.delta, color='k', ms=14, ls='')
+		axarr[0].plot(self.X, self.FittingFunction(BestStep), 'k', ls='-', lw=2)
+		axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i, acceptedpoints), fontsize=22)
+		axarr[1].plot(BestStep[0], BestStep[1], 'or', ms=12)
+		axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(BestStep), fontsize=22)
+		axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
+		axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
 		plt.show()
 
 		return float(acceptedpoints)/i
