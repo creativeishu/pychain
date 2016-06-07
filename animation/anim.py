@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.insert(0,'../src')
 from mcmc import MCMC
-
+import matplotlib
+matplotlib.rc('xtick', labelsize=14) 
+matplotlib.rc('ytick', labelsize=14) 
 #----------------------------------------------------------
 
 class Anim(MCMC):
@@ -140,7 +142,7 @@ class Anim(MCMC):
 				ylist.append(OldStep[1])
 				axarr[1].plot(xlist[-3:-1], ylist[-3:-1], 'k', lw=0.2)
 
-				axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(OldStep), fontsize=22)
+				axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f,\ \chi^2=%1.3f}$'%(OldStep[0], OldStep[1], Oldchi2), fontsize=22)
 				axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
 				axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
 				plt.pause(self.delay)
@@ -162,7 +164,7 @@ class Anim(MCMC):
 		axarr[0].plot(self.X, self.FittingFunction(BestStep), 'k', ls='-', lw=2)
 		axarr[0].set_title('$\mathtt{Step:\ %i,\ AccPoints: %i}$'%(i+1, acceptedpoints), fontsize=22)
 		axarr[1].plot(BestStep[0], BestStep[1], 'or', ms=12)
-		axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f}$'%tuple(BestStep), fontsize=22)
+		axarr[1].set_title('$\mathtt{m=%1.3f,\ c=%1.3f,\ \chi^2=%1.3f}$'%(BestStep[0], BestStep[1], Bestchi2), fontsize=22)
 		axarr[0].set_xlabel('$\mathtt{X}$', fontsize=22)
 		axarr[0].set_ylabel('$\mathtt{Y}$', fontsize=22)
 		plt.show()
@@ -177,5 +179,15 @@ class Anim(MCMC):
 #==============================================================================
 
 if __name__=="__main__":
-	co = Anim()
+	if len(sys.argv) == 1:
+		alpha = 1.0
+		delay = 0.001
+	elif len(sys.argv) == 3:
+		alpha = float(sys.argv[1])
+		delay = float(sys.argv[2])
+	else:
+		print "Syntax: python anim.py <alpha> <delay>"
+		sys.exit()
+		
+	co = Anim(alpha=alpha, delay=delay)
 	co.MainChain()
