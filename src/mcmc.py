@@ -31,7 +31,7 @@ class MCMC(object):
 	"""
 	def __init__(self, NumberOfSteps=10000, \
 				NumberOfParams=2, Mins=[0.0,-1.0], Maxs=[2.0,1.0], SDs=[1.0,1.0], alpha=1.0,\
-				write2file=False, outputfilename='chain.mcmc', randomseed=250192):
+				write2file=False, outputfilename='chain.mcmc', randomseed=250192, debug=False):
 		"""
 		Instantiates the class.
 		"""
@@ -52,7 +52,9 @@ class MCMC(object):
 		self.SD = np.array(SDs)
 
 		self.alpha = alpha
-		self.CovMat = 10.0*self.alpha*np.diag(self.SD**2)
+		self.CovMat = 100.0*self.alpha*np.diag(self.SD**2)
+
+		self.debug = debug
 
 #----------------------------------------------------------
 		
@@ -157,18 +159,25 @@ class MCMC(object):
 			NewStep = self.NextStep(OldStep)
 			Newchi2 = self.chisquare(NewStep)
 
+			if self.debug:
+				strFormat = 7 * '{:10f} '
+				print "Step Number: %i \t Accepted Points: %i"%(i, acceptedpoints)
+				print 'Old: ', Oldchi2, strFormat.format(*OldStep)
+				print 'New: ', Newchi2, strFormat.format(*NewStep)
+				print
+
 			# Checking if it is to be accepted.
 			GoodPoint = self.MetropolisHastings(Oldchi2,Newchi2)
 
 			# Updating step scale using a threshold chi-square.
-			if Newchi2<2*len(self.Y):
+			if Newchi2<3*300:
 						self.CovMat = self.alpha*np.diag(self.SD**2)
 
 			if GoodPoint:
 				# Updating best chi-square so far in the chain.
 				if Newchi2<Bestchi2:
 					Bestchi2=Newchi2
-					print Bestchi2, NewStep
+					print i, Bestchi2, NewStep
 
 				# Writing accepted steps into the output file
 				if self.write2file:
@@ -180,7 +189,7 @@ class MCMC(object):
 				multiplicity = 0
 
 				# Updating the old step. 
-				Oldstep = NewStep
+				OldStep = NewStep
 				Oldchi2 = Newchi2
 			else:
 				continue
