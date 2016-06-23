@@ -170,18 +170,19 @@ class MCMC(object):
 			GoodPoint = self.MetropolisHastings(Oldchi2,Newchi2)
 
 			# Updating step scale using a threshold chi-square.
-			if Newchi2<3*300:
+			if Newchi2<350:
 						self.CovMat = self.alpha*np.diag(self.SD**2)
 
 			if GoodPoint:
 				# Updating best chi-square so far in the chain.
 				if Newchi2<Bestchi2:
+					strFormat = 7 * '{:10f} '
 					Bestchi2=Newchi2
-					print i, Bestchi2, NewStep
+					print i, acceptedpoints, Bestchi2, strFormat.format(*NewStep)
 
 				# Writing accepted steps into the output file
 				if self.write2file:
-					print >>outfile, '%1.6f \t'%Newchi2,'%i \t'%multiplicity,\
+					print >>outfile, '%i \t'%i, '%1.6f \t'%Newchi2,'%i \t'%multiplicity,\
 								writestring%tuple(NewStep)
 
 				# Updating number of accepted points.
