@@ -31,7 +31,8 @@ class MCMC(object):
 	"""
 	def __init__(self, NumberOfSteps=10000, \
 				NumberOfParams=2, Mins=[0.0,-1.0], Maxs=[2.0,1.0], SDs=[1.0,1.0], alpha=1.0,\
-				write2file=False, outputfilename='chain.mcmc', randomseed=250192, debug=False):
+				write2file=False, outputfilename='chain.mcmc', randomseed=250192, debug=False,\
+				EstimateCovariance=True, CovNum=100, goodchi2=35.0):
 		"""
 		Instantiates the class.
 		"""
@@ -55,6 +56,9 @@ class MCMC(object):
 		self.CovMat = 100.0*self.alpha*np.diag(self.SD**2)
 
 		self.debug = debug
+		self.EstimateCovariance = EstimateCovariance
+		self.CovNum = CovNum
+		self.goodchi2 = goodchi2
 
 #----------------------------------------------------------
 		
@@ -141,6 +145,8 @@ class MCMC(object):
 		OldStep = self.FirstStep()
 		Oldchi2 = self.chisquare(OldStep)
 		Bestchi2 = Oldchi2
+		EstCovList = np.zeros((self.CovNum, self.NumberOfParams))
+
 
 		# Preparing output file
 		if self.write2file:
@@ -153,6 +159,12 @@ class MCMC(object):
 
 		# Chain starts here...
 		for i in range(self.NumberOfSteps):
+
+			if (i%1000 == 0):
+				print 
+				print "Step: %i \t AcceptedPoints: %i \t Total: %i"%(i, acceptedpoints, self.NumberOfSteps)
+				print 
+
 			multiplicity += 1
 
 			# Generating next step and its chi-square
@@ -160,7 +172,7 @@ class MCMC(object):
 			Newchi2 = self.chisquare(NewStep)
 
 			if self.debug:
-				strFormat = 7 * '{:10f} '
+				strFormat = self.NumberOfParams * '{:10f} '
 				print "Step Number: %i \t Accepted Points: %i"%(i, acceptedpoints)
 				print 'Old: ', Oldchi2, strFormat.format(*OldStep)
 				print 'New: ', Newchi2, strFormat.format(*NewStep)
@@ -175,10 +187,22 @@ class MCMC(object):
 
 			if GoodPoint:
 				# Updating best chi-square so far in the chain.
+				if self.EstimateCovariance and acceptedpoints<self.CovNum and Newchi2<self.goodchi2:
+					EstCovList[acceptedpoints, :] = NewStep
+					print "Estimating Covariance: %i of %i points"%(acceptedpoints, self.CovNum)
+				if self.EstimateCovariance and acceptedpoints==self.CovNum and Newchi2<self.goodchi2:
+					print 
+					print "Covariance estimated, now updating..."
+					self.CovMat = np.cov(np.transpose(EstCovList))
+					print "Estimated Covariance Matrix: "
+					print self.CovMat
+					print 
+
+
 				if Newchi2<Bestchi2:
-					strFormat = 7 * '{:10f} '
+					strFormat = self.NumberOfParams * '{:10f} '
 					Bestchi2=Newchi2
-					print i, acceptedpoints, Bestchi2, strFormat.format(*NewStep)
+					print "Best Chi-square so far: ", i, '\t', acceptedpoints, '\t', Bestchi2, strFormat.format(*NewStep)
 
 				# Writing accepted steps into the output file
 				if self.write2file:
