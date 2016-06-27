@@ -24,7 +24,7 @@ class QuadraticFit(MCMC):
 	"""
 	def __init__(self, a=1.0, b=10.0, c=25.0, RedStd=15.0):
 
-		MCMC.__init__(self, NumberOfSteps=100000, \
+		MCMC.__init__(self, TargetAcceptedPoints=10000, \
 				NumberOfParams=3, Mins=[-5.0, 5.0, 20], Maxs=[5.0, 15.0, 30.0], SDs=[0.7,4.0,7.0], alpha=0.01,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 

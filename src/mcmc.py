@@ -18,7 +18,7 @@ class MCMC(object):
 
 	Parameters
 	----------
-	NumberOfSteps (Integer): Maximum number of steps.
+	TargetAcceptedPoints (Integer): Targeted accepted points.
 	NumberOfParams (Integer): Total number of model parameters. 
 	Mins (1d array): Array containing the minimum values of each model parameter.
 	Maxs (1d array): Array containing the maximum values of each model parameter.
@@ -29,7 +29,7 @@ class MCMC(object):
 	outputfilename (String): Name of the output file.
 	randomseed (Integer): Random Seed.
 	"""
-	def __init__(self, NumberOfSteps=10000, \
+	def __init__(self, TargetAcceptedPoints=10000, \
 				NumberOfParams=2, Mins=[0.0,-1.0], Maxs=[2.0,1.0], SDs=[1.0,1.0], alpha=1.0,\
 				write2file=False, outputfilename='chain.mcmc', randomseed=250192, debug=False,\
 				EstimateCovariance=True, CovNum=100, goodchi2=35.0):
@@ -46,14 +46,14 @@ class MCMC(object):
 		self.write2file=write2file
 		self.outputfilename=outputfilename
 
-		self.NumberOfSteps = NumberOfSteps
+		self.TargetAcceptedPoints = TargetAcceptedPoints
 		self.NumberOfParams = NumberOfParams
 		self.mins = np.array(Mins)
 		self.maxs = np.array(Maxs)
 		self.SD = np.array(SDs)
 
 		self.alpha = alpha
-		self.CovMat = 100.0*self.alpha*np.diag(self.SD**2)
+		self.CovMat = 100.0 * self.alpha*np.diag(self.SD**2)
 
 		self.debug = debug
 		self.EstimateCovariance = EstimateCovariance
@@ -141,11 +141,12 @@ class MCMC(object):
 		-------
 		Acceptance rate.
 		"""
-		# Initialising the chain
-		OldStep = self.FirstStep()
-		Oldchi2 = self.chisquare(OldStep)
-		Bestchi2 = Oldchi2
-		EstCovList = np.zeros((self.CovNum, self.NumberOfParams))
+
+		# Initialising multiplicity and accepted number of points.
+		multiplicity = 0
+		acceptedpoints = 0
+		icov = 0
+		OneTimeUpdateCov = True
 
 
 		# Preparing output file
@@ -153,16 +154,23 @@ class MCMC(object):
 			outfile = open(self.outputfilename,'w')
 			writestring = '%1.6f \t'*self.NumberOfParams
 
-		# Initialising multiplicity and accepted number of points.
-		multiplicity = 0
-		acceptedpoints = 0
+		# Initialising the chain
+		OldStep = self.FirstStep()
+		Oldchi2 = self.chisquare(OldStep)
+		Bestchi2 = Oldchi2
+		EstCovList = []
 
 		# Chain starts here...
-		for i in range(self.NumberOfSteps):
+		i=0
+		# for i in range(self.NumberOfSteps):
+		while True:
+			i += 1
+			if acceptedpoints == self.TargetAcceptedPoints:
+				break
 
 			if (i%1000 == 0):
 				print 
-				print "Step: %i \t AcceptedPoints: %i \t Total: %i"%(i, acceptedpoints, self.NumberOfSteps)
+				print "Step: %i \t AcceptedPoints: %i \t TargetAcceptedPoints: %i"%(i, acceptedpoints, self.TargetAcceptedPoints)
 				print 
 
 			multiplicity += 1
@@ -182,23 +190,37 @@ class MCMC(object):
 			GoodPoint = self.MetropolisHastings(Oldchi2,Newchi2)
 
 			# Updating step scale using a threshold chi-square.
-			if Newchi2<350:
+			if Newchi2<self.goodchi2 and OneTimeUpdateCov:
 						self.CovMat = self.alpha*np.diag(self.SD**2)
+						OneTimeUpdateCov = False
 
 			if GoodPoint:
-				# Updating best chi-square so far in the chain.
-				if self.EstimateCovariance and acceptedpoints<self.CovNum and Newchi2<self.goodchi2:
-					EstCovList[acceptedpoints, :] = NewStep
-					print "Estimating Covariance: %i of %i points"%(acceptedpoints, self.CovNum)
-				if self.EstimateCovariance and acceptedpoints==self.CovNum and Newchi2<self.goodchi2:
-					print 
+				# Updating number of accepted points.
+				acceptedpoints += 1
+				multiplicity = 0
+
+				# Updating the old step. 
+				OldStep = NewStep
+				Oldchi2 = Newchi2
+
+				# Estimating Covariance
+				if self.EstimateCovariance and icov<self.CovNum and Newchi2<self.goodchi2:
+					icov += 1
+					EstCovList.append(NewStep)
+					print "Estimating Covariance: %i of %i points"%(icov, self.CovNum)
+
+				# Updating Covariance
+				if self.EstimateCovariance and icov==self.CovNum and Newchi2<self.goodchi2:
 					print "Covariance estimated, now updating..."
+					EstCovList = np.array(EstCovList)
 					self.CovMat = np.cov(np.transpose(EstCovList))
 					print "Estimated Covariance Matrix: "
 					print self.CovMat
 					print 
+					self.EstimateCovariance = False
 
 
+				# Updating best chi-square so far in the chain.
 				if Newchi2<Bestchi2:
 					strFormat = self.NumberOfParams * '{:10f} '
 					Bestchi2=Newchi2
@@ -209,13 +231,6 @@ class MCMC(object):
 					print >>outfile, '%i \t'%i, '%1.6f \t'%Newchi2,'%i \t'%multiplicity,\
 								writestring%tuple(NewStep)
 
-				# Updating number of accepted points.
-				acceptedpoints += 1
-				multiplicity = 0
-
-				# Updating the old step. 
-				OldStep = NewStep
-				Oldchi2 = Newchi2
 			else:
 				continue
 		# Writing Best chi-square of the full chain and the acceptance ratio.

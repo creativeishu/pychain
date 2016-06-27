@@ -25,7 +25,7 @@ class LinearFit(MCMC):
 		"""
 		Instantiates the class by synthetically generating data.
 		"""
-		MCMC.__init__(self, NumberOfSteps=100000, \
+		MCMC.__init__(self, TargetAcceptedPoints=10000, \
 				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=0.2,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 
