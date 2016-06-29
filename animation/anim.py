@@ -27,7 +27,7 @@ class Anim(MCMC):
 		"""
 		Instantiates the class by synthetically generating data.
 		"""
-		MCMC.__init__(self, NumberOfSteps=20000, \
+		MCMC.__init__(self, TargetAcceptedPoints=5000, \
 				NumberOfParams=2, Mins=[0.0,20.0], Maxs=[10.0,30.0], SDs=[1.0,2.0], alpha=alpha,\
 				write2file=True, outputfilename='chain.mcmc', randomseed=250192)		
 
@@ -109,8 +109,14 @@ class Anim(MCMC):
 
 		xlist=[]
 		ylist=[]
+		i=0
 		# Chain starts here...
-		for i in range(self.NumberOfSteps):
+		# for i in range(self.NumberOfSteps):
+		while True:
+			i += 1
+			if acceptedpoints == self.TargetAcceptedPoints:
+				break
+
 			multiplicity += 1
 
 			# Generating next step and its chi-square
